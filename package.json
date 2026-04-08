@@ -9,7 +9,7 @@
   "devDependencies": {
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "void": "npm:@void-sdk/void@0.2.3"
+    "void": "npm:@void-sdk/void@0.2.6"
   },
   "packageManager": "pnpm@10.33.0"
 }
