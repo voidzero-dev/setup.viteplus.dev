@@ -81,11 +81,49 @@ async function fetchRelease(
     return null;
   }
   const releases = (await res.json()) as GitHubRelease[];
+  console.log(
+    "GitHub releases:",
+    releases.map((r) => ({ tag: r.tag_name, assets: r.assets.map((a) => a.name) })),
+  );
   return (
     releases.find((r) =>
       r.assets.some((a) => a.name === ASSET_NAMES.x64 || a.name === ASSET_NAMES.arm64),
     ) ?? null
   );
+}
+
+export function buildReleaseFromTag(tag: string): CachedRelease {
+  const base = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${tag}`;
+  return {
+    tag,
+    assets: {
+      x64: `${base}/${ASSET_NAMES.x64}`,
+      arm64: `${base}/${ASSET_NAMES.arm64}`,
+    },
+  };
+}
+
+interface NpmDistTags {
+  alpha?: string;
+  latest?: string;
+}
+
+async function fetchLatestVersionFromNpm(): Promise<string | null> {
+  try {
+    const res = await fetch("https://registry.npmjs.com/vite-plus", {
+      headers: { Accept: "application/vnd.npm.install-v1+json" },
+    });
+    if (!res.ok) {
+      console.error(`npm registry error: ${res.status} ${res.statusText}`);
+      return null;
+    }
+    const data = (await res.json()) as { "dist-tags"?: NpmDistTags };
+    // Windows installers are currently published under the alpha dist-tag
+    return data["dist-tags"]?.alpha ?? data["dist-tags"]?.latest ?? null;
+  } catch (err) {
+    console.error("Failed to fetch version from npm registry:", err);
+    return null;
+  }
 }
 
 function cacheKey(tag: string | undefined): string {
@@ -106,21 +144,32 @@ async function getRelease(
 
   try {
     const release = await fetchRelease(tag, githubToken);
-    if (!release) return null;
-    const parsed = parseRelease(release);
-    if (parsed) {
-      const ttl = tag ? TAGGED_CACHE_TTL : LATEST_CACHE_TTL;
-      const staleTtl = ttl + 3600;
-      await Promise.all([
-        kv.put(key, parsed, { ttl }),
-        kv.put(staleCacheKey(tag), parsed, { ttl: staleTtl }),
-      ]);
+    if (release) {
+      const parsed = parseRelease(release);
+      if (parsed) {
+        const ttl = tag ? TAGGED_CACHE_TTL : LATEST_CACHE_TTL;
+        const staleTtl = ttl + 3600;
+        await Promise.all([
+          kv.put(key, parsed, { ttl }),
+          kv.put(staleCacheKey(tag), parsed, { ttl: staleTtl }),
+        ]);
+        return parsed;
+      }
     }
-    return parsed;
   } catch (err) {
     console.error("Failed to fetch release from GitHub:", err);
-    return await kv.get<CachedRelease>(staleCacheKey(tag));
   }
+
+  // Fallback 1: stale KV cache
+  const stale = await kv.get<CachedRelease>(staleCacheKey(tag));
+  if (stale) return stale;
+
+  // Fallback 2: construct download URLs from tag or npm registry version
+  if (tag) return buildReleaseFromTag(tag);
+  const version = await fetchLatestVersionFromNpm();
+  if (version) return buildReleaseFromTag(`v${version}`);
+
+  return null;
 }
 
 export const GET = defineHandler(async (c) => {

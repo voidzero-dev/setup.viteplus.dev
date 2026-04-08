@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { detectArch, parseRelease } from "./download";
+import { buildReleaseFromTag, detectArch, parseRelease } from "./download";
 
 describe("detectArch", () => {
   it("defaults to x64 when no query param or user-agent", () => {
@@ -117,5 +117,19 @@ describe("parseRelease", () => {
     expect(result).not.toBeNull();
     expect(result!.assets.x64).toBe("https://example.com/x64.exe");
     expect(result!.assets.arm64).toBeUndefined();
+  });
+});
+
+describe("buildReleaseFromTag", () => {
+  it("constructs download URLs from a tag", () => {
+    const result = buildReleaseFromTag("v0.1.17-alpha.0");
+    expect(result).toEqual({
+      tag: "v0.1.17-alpha.0",
+      assets: {
+        x64: "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17-alpha.0/vp-setup-x86_64-pc-windows-msvc.exe",
+        arm64:
+          "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17-alpha.0/vp-setup-aarch64-pc-windows-msvc.exe",
+      },
+    });
   });
 });
