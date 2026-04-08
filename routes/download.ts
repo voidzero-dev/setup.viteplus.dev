@@ -9,13 +9,12 @@ const ASSET_NAMES: Record<Arch, string> = {
 };
 const LATEST_CACHE_TTL = 300; // 5 minutes
 const TAGGED_CACHE_TTL = 86400; // 24 hours
-const STALE_CACHE_TTL = 3600; // 1 hour fallback
 
 type Arch = "x64" | "arm64";
 
 interface CachedRelease {
   tag: string;
-  assets: Record<Arch, string>;
+  assets: Partial<Record<Arch, string>>;
 }
 
 interface GitHubRelease {
@@ -38,7 +37,7 @@ export function detectArch(
 }
 
 export function parseRelease(release: GitHubRelease): CachedRelease | null {
-  const assets = {} as Record<Arch, string>;
+  const assets: Partial<Record<Arch, string>> = {};
   for (const asset of release.assets) {
     if (asset.name === ASSET_NAMES.x64) assets.x64 = asset.browser_download_url;
     if (asset.name === ASSET_NAMES.arm64) assets.arm64 = asset.browser_download_url;
@@ -47,38 +46,54 @@ export function parseRelease(release: GitHubRelease): CachedRelease | null {
   return { tag: release.tag_name, assets };
 }
 
-async function fetchRelease(
-  tag: string | undefined,
-  githubToken: string | undefined,
-): Promise<GitHubRelease | null> {
+async function fetchGitHub(path: string, githubToken: string | undefined): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github.v3+json",
     "User-Agent": "vp-setup-exe-downloader",
   };
   if (githubToken) headers.Authorization = `Bearer ${githubToken}`;
+  return fetch(`https://api.github.com${path}`, { headers });
+}
 
+async function fetchRelease(
+  tag: string | undefined,
+  githubToken: string | undefined,
+): Promise<GitHubRelease | null> {
   if (tag) {
-    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${tag}`;
-    const res = await fetch(url, { headers });
-    if (!res.ok) return null;
+    const res = await fetchGitHub(
+      `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${tag}`,
+      githubToken,
+    );
+    if (!res.ok) {
+      console.error(`GitHub API error: ${res.status} ${res.statusText} for tag ${tag}`);
+      return null;
+    }
     return (await res.json()) as GitHubRelease;
   }
 
-  // List releases to find the latest one with exe assets (includes pre-releases)
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases?per_page=10`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) return null;
-  const releases = (await res.json()) as GitHubRelease[];
-  for (const release of releases) {
-    if (release.assets.some((a) => a.name === ASSET_NAMES.x64 || a.name === ASSET_NAMES.arm64)) {
-      return release;
-    }
+  // Includes pre-releases, unlike /releases/latest
+  const res = await fetchGitHub(
+    `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases?per_page=10`,
+    githubToken,
+  );
+  if (!res.ok) {
+    console.error(`GitHub API error: ${res.status} ${res.statusText} for releases list`);
+    return null;
   }
-  return null;
+  const releases = (await res.json()) as GitHubRelease[];
+  return (
+    releases.find((r) =>
+      r.assets.some((a) => a.name === ASSET_NAMES.x64 || a.name === ASSET_NAMES.arm64),
+    ) ?? null
+  );
 }
 
-function cacheKey(tag?: string): string {
+function cacheKey(tag: string | undefined): string {
   return tag ? `release:tag:${tag}` : "release:latest";
+}
+
+function staleCacheKey(tag: string | undefined): string {
+  return `${cacheKey(tag)}:stale`;
 }
 
 async function getRelease(
@@ -86,26 +101,25 @@ async function getRelease(
   githubToken: string | undefined,
 ): Promise<CachedRelease | null> {
   const key = cacheKey(tag);
-
-  // Try fresh cache
   const cached = await kv.get<CachedRelease>(key);
   if (cached) return cached;
 
-  // Fetch from GitHub
   try {
     const release = await fetchRelease(tag, githubToken);
     if (!release) return null;
     const parsed = parseRelease(release);
     if (parsed) {
       const ttl = tag ? TAGGED_CACHE_TTL : LATEST_CACHE_TTL;
-      await kv.put(key, parsed, { ttl });
-      // Store stale fallback with longer TTL
-      await kv.put(`${key}:stale`, parsed, { ttl: STALE_CACHE_TTL });
+      const staleTtl = ttl + 3600;
+      await Promise.all([
+        kv.put(key, parsed, { ttl }),
+        kv.put(staleCacheKey(tag), parsed, { ttl: staleTtl }),
+      ]);
     }
     return parsed;
-  } catch {
-    // On failure, try stale cache
-    return await kv.get<CachedRelease>(`${key}:stale`);
+  } catch (err) {
+    console.error("Failed to fetch release from GitHub:", err);
+    return await kv.get<CachedRelease>(staleCacheKey(tag));
   }
 }
 
@@ -119,7 +133,7 @@ export const GET = defineHandler(async (c) => {
     return c.json({ error: "Invalid architecture. Use 'x64' or 'arm64'" }, 400);
   }
 
-  const githubToken = (c.env as Record<string, string>).GITHUB_TOKEN;
+  const githubToken = c.env.GITHUB_TOKEN as string | undefined;
   const release = await getRelease(tag || undefined, githubToken);
 
   if (!release) {

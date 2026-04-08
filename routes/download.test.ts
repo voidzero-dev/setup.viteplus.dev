@@ -48,6 +48,15 @@ describe("detectArch", () => {
     ).toBe("x64");
   });
 
+  it("defaults to x64 for Windows Edge User-Agent", () => {
+    expect(
+      detectArch(
+        undefined,
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+      ),
+    ).toBe("x64");
+  });
+
   it("query param takes precedence over User-Agent", () => {
     expect(detectArch("x64", "Mozilla/5.0 (Windows NT 10.0; ARM64) AppleWebKit/537.36")).toBe(
       "x64",
