@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { buildReleaseFromTag, detectArch, parseRelease } from "./download";
+import { buildReleaseFromTag, detectArch, parseRelease } from "../routes/download";
 
 describe("detectArch", () => {
   it("defaults to x64 when no query param or user-agent", () => {

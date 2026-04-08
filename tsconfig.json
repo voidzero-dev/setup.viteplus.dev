@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": ["void/env", "vite-plus/client"]
   },
-  "include": ["routes"]
+  "include": ["routes", "tests"]
 }
