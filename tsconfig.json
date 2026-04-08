@@ -7,8 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx",
     "types": ["void/env", "vite-plus/client"]
   },
-  "include": ["db", "pages", "routes", "middleware"]
+  "include": ["routes"]
 }
