@@ -55,10 +55,12 @@ async function fetchGitHub(path: string, githubToken: string | undefined): Promi
   return fetch(`https://api.github.com${path}`, { headers });
 }
 
-async function fetchRelease(
+// "not-found" means the tag definitively doesn't exist (GitHub 404).
+// null means the API failed (rate limit, network error) — fallbacks may still work.
+export async function fetchRelease(
   tag: string | undefined,
   githubToken: string | undefined,
-): Promise<GitHubRelease | null> {
+): Promise<GitHubRelease | null | "not-found"> {
   if (tag) {
     const res = await fetchGitHub(
       `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${tag}`,
@@ -66,7 +68,7 @@ async function fetchRelease(
     );
     if (!res.ok) {
       console.error(`GitHub API error: ${res.status} ${res.statusText} for tag ${tag}`);
-      return null;
+      return res.status === 404 ? "not-found" : null;
     }
     return (await res.json()) as GitHubRelease;
   }
@@ -83,7 +85,7 @@ async function fetchRelease(
   const releases = (await res.json()) as GitHubRelease[];
   console.log(
     "GitHub releases:",
-    releases.map((r) => ({ tag: r.tag_name, assets: r.assets.map((a) => a.name) })),
+    JSON.stringify(releases.map((r) => ({ tag: r.tag_name, assets: r.assets.map((a) => a.name) }))),
   );
   return (
     releases.find((r) =>
@@ -144,6 +146,11 @@ async function getRelease(
 
   try {
     const release = await fetchRelease(tag, githubToken);
+    if (release === "not-found") {
+      // Cache the negative result to avoid repeated API calls for the same bad tag
+      await kv.put(key, null, { ttl: LATEST_CACHE_TTL });
+      return null;
+    }
     if (release) {
       const parsed = parseRelease(release);
       if (parsed) {
@@ -328,5 +335,5 @@ export const GET = defineHandler(async (c) => {
   if (!release) {
     return c.json({ error: tag ? `Release '${tag}' not found` : "No release found" }, 404);
   }
-  return c.html(renderDownloadPage(release));
+  return c.html(renderDownloadPage(release), { headers: { "Cache-Control": "no-store" } });
 });

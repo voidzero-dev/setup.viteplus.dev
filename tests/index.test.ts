@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vite-plus/test";
-import { buildReleaseFromTag, detectArch, parseRelease } from "../routes/index";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { buildReleaseFromTag, detectArch, fetchRelease, parseRelease } from "../routes/index";
 
 describe("detectArch", () => {
   it("defaults to x64 when no query param or user-agent", () => {
@@ -131,5 +131,63 @@ describe("buildReleaseFromTag", () => {
           "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17-alpha.0/vp-setup-aarch64-pc-windows-msvc.exe",
       },
     });
+  });
+});
+
+describe("fetchRelease", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('returns "not-found" when GitHub returns 404 for a tag', async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(new Response("Not Found", { status: 404, statusText: "Not Found" })),
+    );
+    const result = await fetchRelease("not-exists", undefined);
+    expect(result).toBe("not-found");
+  });
+
+  it("returns null when GitHub returns 403 (rate limited) for a tag", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(new Response("Forbidden", { status: 403, statusText: "Forbidden" })),
+    );
+    const result = await fetchRelease("v1.0.0", undefined);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when GitHub returns 500 for a tag", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("Internal Server Error", {
+          status: 500,
+          statusText: "Internal Server Error",
+        }),
+      ),
+    );
+    const result = await fetchRelease("v1.0.0", undefined);
+    expect(result).toBeNull();
+  });
+
+  it("returns the release when GitHub returns 200 for a tag", async () => {
+    const release = {
+      tag_name: "v1.0.0",
+      assets: [
+        {
+          name: "vp-setup-x86_64-pc-windows-msvc.exe",
+          browser_download_url: "https://example.com/x64.exe",
+        },
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify(release), { status: 200 })),
+    );
+    const result = await fetchRelease("v1.0.0", undefined);
+    expect(result).toEqual(release);
   });
 });
