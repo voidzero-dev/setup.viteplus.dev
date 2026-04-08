@@ -1,29 +1,29 @@
 # vp-setup-exe-downloader
 
-Download redirector for the Vite+ Windows installer. Auto-detects CPU architecture and redirects to the correct GitHub release asset.
+Download page and redirector for the Vite+ Windows installer. Serves a landing page that auto-detects CPU architecture using [UA Client Hints](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/getHighEntropyValues) and links to the correct GitHub release asset.
 
 ## Endpoints
 
 ### `GET /`
 
-Redirects to the [Vite+ installation guide](https://viteplus.dev/guide/#install-vp).
+Serves the download page with client-side architecture detection.
 
-### `GET /download`
-
-Redirects to the latest `vp-setup.exe` GitHub release asset.
+- On Windows ARM64 browsers (Chrome/Edge 90+), the main download button automatically points to the ARM64 installer.
+- On all other browsers, defaults to the x64 installer.
+- A secondary link for the alternative architecture is always visible.
 
 **Query parameters:**
 
-| Param  | Description                                      | Example                |
-| ------ | ------------------------------------------------ | ---------------------- |
-| `arch` | Override architecture detection (`x64`, `arm64`) | `?arch=arm64`          |
-| `tag`  | Pin to a specific release tag                    | `?tag=v0.1.17-alpha.0` |
+| Param  | Description                                          | Example                |
+| ------ | ---------------------------------------------------- | ---------------------- |
+| `arch` | Skip the page and redirect directly (`x64`, `arm64`) | `?arch=arm64`          |
+| `tag`  | Pin to a specific release tag                        | `?tag=v0.1.17-alpha.0` |
 
-**Architecture detection:**
+When `?arch=` is provided, the endpoint returns a 302 redirect instead of the HTML page (useful for CLI/curl).
 
-1. `?arch=` query parameter (explicit override)
-2. `User-Agent` header (detects `ARM64`/`aarch64`)
-3. Defaults to `x64`
+### `GET /favicon.ico`
+
+Redirects to the Vite+ favicon.
 
 ## Development
 
