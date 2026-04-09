@@ -17,4 +17,5 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - run: vp check
+      - run: vp build
       - run: vp test
