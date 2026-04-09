@@ -2,18 +2,20 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm void deploy
+          cache: true
+          registry-url: https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+      - run: vp void deploy
         env:
           VOID_TOKEN: ${{ secrets.VOID_TOKEN }}
+          VOID_PROJECT: ${{ secrets.VOID_PROJECT }}
