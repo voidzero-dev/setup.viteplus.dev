@@ -7,6 +7,7 @@
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@types/node": "^25.5.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "void": "npm:@void-sdk/void@0.2.6"
