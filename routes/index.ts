@@ -1,6 +1,9 @@
 import { defineHandler } from "void";
 import { kv } from "void/kv";
 
+declare const __DEPLOY_COMMIT__: string;
+declare const __DEPLOY_TIME__: string;
+
 const GITHUB_OWNER = "voidzero-dev";
 const GITHUB_REPO = "vite-plus";
 const ASSET_NAMES: Record<Arch, string> = {
@@ -219,6 +222,8 @@ h1{font-size:1.5rem;font-weight:700;margin-bottom:6px}
 .note{color:#999;font-size:.85rem;line-height:1.6}
 .note a{color:#2563eb;text-decoration:none}
 .note a:hover{text-decoration:underline}
+.deploy-info{color:#fafafa;font-size:.7rem;margin-top:24px;user-select:all}
+.deploy-info::selection{color:#999;background:#e5e5e5}
 </style>
 </head>
 <body>
@@ -250,6 +255,7 @@ ${
   <p class="note">
     Windows installer for <a href="https://viteplus.dev">Vite+</a>, the unified toolchain for the web.
   </p>
+  <p class="deploy-info">deploy: ${escapeHtml(__DEPLOY_COMMIT__)} · ${escapeHtml(__DEPLOY_TIME__)}</p>
 </div>
 ${
   hasBoth
