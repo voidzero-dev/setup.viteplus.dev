@@ -12,6 +12,7 @@ const ASSET_NAMES: Record<Arch, string> = {
 };
 const LATEST_CACHE_TTL = 300; // 5 minutes
 const TAGGED_CACHE_TTL = 86400; // 24 hours
+const DEFAULT_DIST_TAG = "alpha";
 
 type Arch = "x64" | "arm64";
 
@@ -76,25 +77,19 @@ export async function fetchRelease(
     return (await res.json()) as GitHubRelease;
   }
 
-  // Includes pre-releases, unlike /releases/latest
+  const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
+  if (!version) return null;
   const res = await fetchGitHub(
-    `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases?per_page=10`,
+    `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`,
     githubToken,
   );
   if (!res.ok) {
-    console.error(`GitHub API error: ${res.status} ${res.statusText} for releases list`);
+    console.error(`GitHub API error: ${res.status} ${res.statusText} for default tag v${version}`);
+    // Treat all failures (incl. 404) as transient so getRelease doesn't cache a negative
+    // under `release:latest` when npm/GitHub are momentarily out of sync.
     return null;
   }
-  const releases = (await res.json()) as GitHubRelease[];
-  console.log(
-    "GitHub releases:",
-    JSON.stringify(releases.map((r) => ({ tag: r.tag_name, assets: r.assets.map((a) => a.name) }))),
-  );
-  return (
-    releases.find((r) =>
-      r.assets.some((a) => a.name === ASSET_NAMES.x64 || a.name === ASSET_NAMES.arm64),
-    ) ?? null
-  );
+  return (await res.json()) as GitHubRelease;
 }
 
 export function buildReleaseFromTag(tag: string): CachedRelease {
@@ -108,12 +103,7 @@ export function buildReleaseFromTag(tag: string): CachedRelease {
   };
 }
 
-interface NpmDistTags {
-  alpha?: string;
-  latest?: string;
-}
-
-async function fetchLatestVersionFromNpm(): Promise<string | null> {
+async function fetchNpmDistTagVersion(distTag: string): Promise<string | null> {
   try {
     const res = await fetch("https://registry.npmjs.com/vite-plus", {
       headers: { Accept: "application/vnd.npm.install-v1+json" },
@@ -122,9 +112,8 @@ async function fetchLatestVersionFromNpm(): Promise<string | null> {
       console.error(`npm registry error: ${res.status} ${res.statusText}`);
       return null;
     }
-    const data = (await res.json()) as { "dist-tags"?: NpmDistTags };
-    // Windows installers are currently published under the alpha dist-tag
-    return data["dist-tags"]?.alpha ?? data["dist-tags"]?.latest ?? null;
+    const data = (await res.json()) as { "dist-tags"?: Record<string, string> };
+    return data["dist-tags"]?.[distTag] ?? null;
   } catch (err) {
     console.error("Failed to fetch version from npm registry:", err);
     return null;
@@ -176,7 +165,7 @@ async function getRelease(
 
   // Fallback 2: construct download URLs from tag or npm registry version
   if (tag) return buildReleaseFromTag(tag);
-  const version = await fetchLatestVersionFromNpm();
+  const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
   if (version) return buildReleaseFromTag(`v${version}`);
 
   return null;

@@ -190,4 +190,74 @@ describe("fetchRelease", () => {
     const result = await fetchRelease("v1.0.0", undefined);
     expect(result).toEqual(release);
   });
+
+  it("default path: resolves via npm alpha dist-tag then fetches that GitHub tag", async () => {
+    const release = {
+      tag_name: "v0.1.17-alpha.0",
+      assets: [
+        {
+          name: "vp-setup-x86_64-pc-windows-msvc.exe",
+          browser_download_url:
+            "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17-alpha.0/vp-setup-x86_64-pc-windows-msvc.exe",
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ "dist-tags": { alpha: "0.1.17-alpha.0" } }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(release), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRelease(undefined, undefined);
+
+    expect(result).toEqual(release);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const secondCallUrl = fetchMock.mock.calls[1][0];
+    expect(secondCallUrl).toContain("/releases/tags/v0.1.17-alpha.0");
+  });
+
+  it("default path: returns null and skips GitHub when npm registry fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRelease(undefined, undefined);
+
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("default path: returns null and skips GitHub when npm has no alpha dist-tag", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ "dist-tags": { latest: "0.1.0" } }), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRelease(undefined, undefined);
+
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('default path: returns null (not "not-found") when GitHub 404s the resolved tag', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ "dist-tags": { alpha: "0.1.17-alpha.0" } }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response("Not Found", { status: 404, statusText: "Not Found" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRelease(undefined, undefined);
+
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
