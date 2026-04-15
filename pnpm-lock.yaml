@@ -11,7 +11,7 @@ catalogs:
       version: 0.1.18-alpha.0
 
 overrides:
-  vite: npm:@voidzero-dev/vite-plus-core@^0.1.18-alpha.0
+  vite: npm:@voidzero-dev/vite-plus-core@0.1.18-alpha.0
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.18-alpha.0
 
 importers:
@@ -22,7 +22,7 @@ importers:
         specifier: ^25.5.2
         version: 25.5.2
       vite:
-        specifier: npm:@voidzero-dev/vite-plus-core@^0.1.18-alpha.0
+        specifier: npm:@voidzero-dev/vite-plus-core@0.1.18-alpha.0
         version: '@voidzero-dev/vite-plus-core@0.1.18-alpha.0(@types/node@25.5.2)(esbuild@0.27.7)(tsx@4.21.0)'
       vite-plus:
         specifier: 'catalog:'
