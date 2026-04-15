@@ -191,21 +191,21 @@ describe("fetchRelease", () => {
     expect(result).toEqual(release);
   });
 
-  it("default path: resolves via npm alpha dist-tag then fetches that GitHub tag", async () => {
+  it("default path: resolves via npm latest dist-tag then fetches that GitHub tag", async () => {
     const release = {
-      tag_name: "v0.1.17-alpha.0",
+      tag_name: "v0.1.17",
       assets: [
         {
           name: "vp-setup-x86_64-pc-windows-msvc.exe",
           browser_download_url:
-            "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17-alpha.0/vp-setup-x86_64-pc-windows-msvc.exe",
+            "https://github.com/voidzero-dev/vite-plus/releases/download/v0.1.17/vp-setup-x86_64-pc-windows-msvc.exe",
         },
       ],
     };
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ "dist-tags": { alpha: "0.1.17-alpha.0" } }), { status: 200 }),
+        new Response(JSON.stringify({ "dist-tags": { latest: "0.1.17" } }), { status: 200 }),
       )
       .mockResolvedValueOnce(new Response(JSON.stringify(release), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
@@ -215,7 +215,7 @@ describe("fetchRelease", () => {
     expect(result).toEqual(release);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const secondCallUrl = fetchMock.mock.calls[1][0];
-    expect(secondCallUrl).toContain("/releases/tags/v0.1.17-alpha.0");
+    expect(secondCallUrl).toContain("/releases/tags/v0.1.17");
   });
 
   it("default path: returns null and skips GitHub when npm registry fails", async () => {
@@ -232,11 +232,11 @@ describe("fetchRelease", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("default path: returns null and skips GitHub when npm has no alpha dist-tag", async () => {
+  it("default path: returns null and skips GitHub when npm has no latest dist-tag", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ "dist-tags": { latest: "0.1.0" } }), { status: 200 }),
+        new Response(JSON.stringify({ "dist-tags": { alpha: "0.1.17-alpha.5" } }), { status: 200 }),
       );
     vi.stubGlobal("fetch", fetchMock);
 
@@ -250,7 +250,7 @@ describe("fetchRelease", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ "dist-tags": { alpha: "0.1.17-alpha.0" } }), { status: 200 }),
+        new Response(JSON.stringify({ "dist-tags": { latest: "0.1.17" } }), { status: 200 }),
       )
       .mockResolvedValueOnce(new Response("Not Found", { status: 404, statusText: "Not Found" }));
     vi.stubGlobal("fetch", fetchMock);

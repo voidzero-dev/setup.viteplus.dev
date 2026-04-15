@@ -12,7 +12,7 @@ const ASSET_NAMES: Record<Arch, string> = {
 };
 const LATEST_CACHE_TTL = 300; // 5 minutes
 const TAGGED_CACHE_TTL = 86400; // 24 hours
-const DEFAULT_DIST_TAG = "alpha";
+const DEFAULT_DIST_TAG = "latest";
 
 type Arch = "x64" | "arm64";
 
