@@ -91,7 +91,7 @@ async function getRelease(tag: string | undefined): Promise<CachedRelease | null
   return kv.get<CachedRelease>(LATEST_STALE_KEY);
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")

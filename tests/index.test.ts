@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { buildReleaseFromTag, detectArch } from "../routes/index";
+import { buildReleaseFromTag, detectArch, escapeHtml } from "../routes/index";
 
 describe("detectArch", () => {
   it("defaults to x64 when no query param or user-agent", () => {
@@ -61,6 +61,26 @@ describe("detectArch", () => {
     expect(detectArch("x64", "Mozilla/5.0 (Windows NT 10.0; ARM64) AppleWebKit/537.36")).toBe(
       "x64",
     );
+  });
+});
+
+describe("escapeHtml", () => {
+  it("escapes HTML special characters", () => {
+    expect(escapeHtml('<script>alert("xss")</script>')).toBe(
+      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;",
+    );
+  });
+
+  it("escapes ampersands", () => {
+    expect(escapeHtml("a&b")).toBe("a&amp;b");
+  });
+
+  it("escapes a malicious tag used in attribute context", () => {
+    const malicious = 'x"><img src=x onerror=alert(1)>';
+    const escaped = escapeHtml(malicious);
+    expect(escaped).not.toContain("<");
+    expect(escaped).not.toContain(">");
+    expect(escaped).not.toContain('"');
   });
 });
 
