@@ -40,7 +40,6 @@ Deployed to [Cloudflare Workers](https://workers.cloudflare.com/) via [Void](htt
 
 ### Environment variables
 
-| Variable       | Required | Description                                                |
-| -------------- | -------- | ---------------------------------------------------------- |
-| `GITHUB_TOKEN` | No       | GitHub token for higher API rate limits (60/hr -> 5000/hr) |
-| `VOID_TOKEN`   | Yes (CI) | Void deployment token                                      |
+| Variable     | Required | Description           |
+| ------------ | -------- | --------------------- |
+| `VOID_TOKEN` | Yes (CI) | Void deployment token |
