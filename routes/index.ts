@@ -76,15 +76,6 @@ async function getRelease(tag: string | undefined): Promise<CachedRelease | null
   const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
   if (version) {
     const release = buildReleaseFromTag(`v${version}`);
-    // Verify asset exists before caching — npm may publish before GitHub release assets are ready
-    try {
-      const probe = await fetch(release.assets.x64!, { method: "HEAD", redirect: "manual" });
-      if (probe.status === 404) {
-        return kv.get<CachedRelease>(LATEST_STALE_KEY);
-      }
-    } catch {
-      // Network error checking asset — still serve the release, cache writes are best-effort below
-    }
     try {
       await Promise.all([
         kv.put(LATEST_CACHE_KEY, release, { ttl: LATEST_CACHE_TTL }),
