@@ -11,7 +11,6 @@ const ASSET_NAMES: Record<Arch, string> = {
   arm64: "vp-setup-aarch64-pc-windows-msvc.exe",
 };
 const LATEST_CACHE_TTL = 300; // 5 minutes
-const TAGGED_CACHE_TTL = 86400; // 24 hours
 const DEFAULT_DIST_TAG = "latest";
 
 type Arch = "x64" | "arm64";
@@ -19,11 +18,6 @@ type Arch = "x64" | "arm64";
 interface CachedRelease {
   tag: string;
   assets: Partial<Record<Arch, string>>;
-}
-
-interface GitHubRelease {
-  tag_name: string;
-  assets: Array<{ name: string; browser_download_url: string }>;
 }
 
 export function detectArch(
@@ -38,58 +32,6 @@ export function detectArch(
   }
   if (userAgent && /arm64|aarch64/i.test(userAgent)) return "arm64";
   return "x64";
-}
-
-export function parseRelease(release: GitHubRelease): CachedRelease | null {
-  const assets: Partial<Record<Arch, string>> = {};
-  for (const asset of release.assets) {
-    if (asset.name === ASSET_NAMES.x64) assets.x64 = asset.browser_download_url;
-    if (asset.name === ASSET_NAMES.arm64) assets.arm64 = asset.browser_download_url;
-  }
-  if (!assets.x64 && !assets.arm64) return null;
-  return { tag: release.tag_name, assets };
-}
-
-async function fetchGitHub(path: string, githubToken: string | undefined): Promise<Response> {
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-    "User-Agent": "vp-setup-exe-downloader",
-  };
-  if (githubToken) headers.Authorization = `Bearer ${githubToken}`;
-  return fetch(`https://api.github.com${path}`, { headers });
-}
-
-// "not-found" means the tag definitively doesn't exist (GitHub 404).
-// null means the API failed (rate limit, network error) — fallbacks may still work.
-export async function fetchRelease(
-  tag: string | undefined,
-  githubToken: string | undefined,
-): Promise<GitHubRelease | null | "not-found"> {
-  if (tag) {
-    const res = await fetchGitHub(
-      `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${tag}`,
-      githubToken,
-    );
-    if (!res.ok) {
-      console.error(`GitHub API error: ${res.status} ${res.statusText} for tag ${tag}`);
-      return res.status === 404 ? "not-found" : null;
-    }
-    return (await res.json()) as GitHubRelease;
-  }
-
-  const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
-  if (!version) return null;
-  const res = await fetchGitHub(
-    `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`,
-    githubToken,
-  );
-  if (!res.ok) {
-    console.error(`GitHub API error: ${res.status} ${res.statusText} for default tag v${version}`);
-    // Treat all failures (incl. 404) as transient so getRelease doesn't cache a negative
-    // under `release:latest` when npm/GitHub are momentarily out of sync.
-    return null;
-  }
-  return (await res.json()) as GitHubRelease;
 }
 
 export function buildReleaseFromTag(tag: string): CachedRelease {
@@ -120,55 +62,29 @@ async function fetchNpmDistTagVersion(distTag: string): Promise<string | null> {
   }
 }
 
-function cacheKey(tag: string | undefined): string {
-  return tag ? `release:tag:${tag}` : "release:latest";
-}
+const LATEST_CACHE_KEY = "release:latest";
+const LATEST_STALE_KEY = "release:latest:stale";
 
-function staleCacheKey(tag: string | undefined): string {
-  return `${cacheKey(tag)}:stale`;
-}
+async function getRelease(tag: string | undefined): Promise<CachedRelease | null> {
+  // Tags are immutable — construct the download URL directly, no network or cache needed
+  if (tag) return buildReleaseFromTag(tag);
 
-async function getRelease(
-  tag: string | undefined,
-  githubToken: string | undefined,
-): Promise<CachedRelease | null> {
-  const key = cacheKey(tag);
-  const cached = await kv.get<CachedRelease>(key);
+  // "Latest" path: use KV cache to avoid hitting npm on every request
+  const cached = await kv.get<CachedRelease>(LATEST_CACHE_KEY);
   if (cached) return cached;
 
-  try {
-    const release = await fetchRelease(tag, githubToken);
-    if (release === "not-found") {
-      // Cache the negative result to avoid repeated API calls for the same bad tag
-      await kv.put(key, null, { ttl: LATEST_CACHE_TTL });
-      return null;
-    }
-    if (release) {
-      const parsed = parseRelease(release);
-      if (parsed) {
-        const ttl = tag ? TAGGED_CACHE_TTL : LATEST_CACHE_TTL;
-        const staleTtl = ttl + 3600;
-        await Promise.all([
-          kv.put(key, parsed, { ttl }),
-          kv.put(staleCacheKey(tag), parsed, { ttl: staleTtl }),
-        ]);
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.error("Failed to fetch release from GitHub:", err);
+  const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
+  if (version) {
+    const release = buildReleaseFromTag(`v${version}`);
+    await Promise.all([
+      kv.put(LATEST_CACHE_KEY, release, { ttl: LATEST_CACHE_TTL }),
+      kv.put(LATEST_STALE_KEY, release, { ttl: LATEST_CACHE_TTL + 3600 }),
+    ]);
+    return release;
   }
 
-  // Fallback 1: stale KV cache
-  const stale = await kv.get<CachedRelease>(staleCacheKey(tag));
-  if (stale) return stale;
-
-  // Fallback 2: construct download URLs from tag or npm registry version
-  if (tag) return buildReleaseFromTag(tag);
-  const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
-  if (version) return buildReleaseFromTag(`v${version}`);
-
-  return null;
+  // npm unreachable — fall back to stale cache
+  return kv.get<CachedRelease>(LATEST_STALE_KEY);
 }
 
 function escapeHtml(s: string): string {
@@ -306,7 +222,6 @@ setupDownloadLink();
 export const GET = defineHandler(async (c) => {
   const queryArch = c.req.query("arch");
   const tag = c.req.query("tag");
-  const githubToken = c.env.GITHUB_TOKEN as string | undefined;
 
   // When ?arch= is specified, redirect directly (backward-compatible for CLI/curl)
   if (queryArch) {
@@ -314,7 +229,7 @@ export const GET = defineHandler(async (c) => {
     if (arch === null) {
       return c.json({ error: "Invalid architecture. Use 'x64' or 'arm64'" }, 400);
     }
-    const release = await getRelease(tag || undefined, githubToken);
+    const release = await getRelease(tag || undefined);
     if (!release) {
       return c.json({ error: tag ? `Release '${tag}' not found` : "No release found" }, 404);
     }
@@ -326,7 +241,7 @@ export const GET = defineHandler(async (c) => {
   }
 
   // Serve the download page with client-side architecture detection
-  const release = await getRelease(tag || undefined, githubToken);
+  const release = await getRelease(tag || undefined);
   if (!release) {
     return c.json({ error: tag ? `Release '${tag}' not found` : "No release found" }, 404);
   }
