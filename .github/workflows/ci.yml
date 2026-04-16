@@ -46,7 +46,7 @@ jobs:
           script: |
             const marker = '<!-- staging-deploy -->';
             const body = `${marker}\n✅ Staging deployment successful!\n\nPreview: https://vp-setup-staging.void.app/\nCommit: ${context.sha}`;
-            const { data: comments } = await github.rest.issues.listComments({
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,

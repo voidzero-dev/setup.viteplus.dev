@@ -76,10 +76,23 @@ async function getRelease(tag: string | undefined): Promise<CachedRelease | null
   const version = await fetchNpmDistTagVersion(DEFAULT_DIST_TAG);
   if (version) {
     const release = buildReleaseFromTag(`v${version}`);
-    await Promise.all([
-      kv.put(LATEST_CACHE_KEY, release, { ttl: LATEST_CACHE_TTL }),
-      kv.put(LATEST_STALE_KEY, release, { ttl: LATEST_CACHE_TTL + 3600 }),
-    ]);
+    // Verify asset exists before caching — npm may publish before GitHub release assets are ready
+    try {
+      const probe = await fetch(release.assets.x64!, { method: "HEAD", redirect: "manual" });
+      if (probe.status === 404) {
+        return kv.get<CachedRelease>(LATEST_STALE_KEY);
+      }
+    } catch {
+      // Network error checking asset — still serve the release, cache writes are best-effort below
+    }
+    try {
+      await Promise.all([
+        kv.put(LATEST_CACHE_KEY, release, { ttl: LATEST_CACHE_TTL }),
+        kv.put(LATEST_STALE_KEY, release, { ttl: LATEST_CACHE_TTL + 3600 }),
+      ]);
+    } catch (err) {
+      console.error("KV write failed:", err);
+    }
     return release;
   }
 
@@ -207,7 +220,12 @@ async function setupDownloadLink() {
   mainBtn.textContent = "Download for Windows (ARM64)";
 
   if (altEl && x64Url) {
-    altEl.innerHTML = 'Also available: <a href="' + x64Url + '" download>Windows x64</a>';
+    var link = document.createElement("a");
+    link.href = x64Url;
+    link.download = "";
+    link.textContent = "Windows x64";
+    altEl.textContent = "Also available: ";
+    altEl.appendChild(link);
   }
 }
 
