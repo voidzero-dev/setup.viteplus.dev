@@ -7,10 +7,10 @@
     "prepare": "vp config"
   },
   "devDependencies": {
-    "@types/node": "^25.5.2",
+    "@types/node": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "void": "npm:@void-sdk/void@0.3.0"
+    "void": "catalog:"
   },
   "packageManager": "pnpm@10.33.0"
 }
