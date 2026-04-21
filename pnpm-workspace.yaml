@@ -1,7 +1,9 @@
 catalog:
+  "@types/node": ^25.5.2
   vite: npm:@voidzero-dev/vite-plus-core@0.1.18
   vite-plus: 0.1.18
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.18
+  void: npm:@void-sdk/void@0.5.0
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
