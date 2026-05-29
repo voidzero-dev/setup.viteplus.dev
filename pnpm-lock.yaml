@@ -13,8 +13,8 @@ catalogs:
       specifier: 0.1.23
       version: 0.1.23
     void:
-      specifier: 0.7.5
-      version: 0.7.5
+      specifier: 0.8.11
+      version: 0.8.11
 
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.23
@@ -35,7 +35,7 @@ importers:
         version: 0.1.23(@types/node@25.6.0)(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(esbuild@0.27.7)(tsx@4.21.0)
       void:
         specifier: 'catalog:'
-        version: 0.7.5(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6)
+        version: 0.8.11(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6)
 
 packages:
 
@@ -1791,6 +1791,9 @@ packages:
   es-module-lexer@1.7.0:
     resolution: {integrity: sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==}
 
+  es-module-lexer@2.1.0:
+    resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
+
   esbuild@0.18.20:
     resolution: {integrity: sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA==}
     engines: {node: '>=12'}
@@ -2232,11 +2235,11 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  void@0.7.5:
-    resolution: {integrity: sha512-UNt5hk/AIr4zzZvC9yrcp8x0jssSFwcovqx66ResoSDB9MzfW6FNX7uH75VtI2K2cDJn3skPON6rAkXqM8Heuw==}
+  void@0.8.11:
+    resolution: {integrity: sha512-q/N05NgmtXQhFntcleL9Evg2RTTpuKAUVALohBvHp5mWzxWLnha5aV/xOZTW8xpWgOXS5ZsMKEVwkLyHL7w2LA==}
     hasBin: true
     peerDependencies:
-      '@void/md': 0.7.5
+      '@void/md': 0.8.11
       arktype: '>=2.0.0'
       valibot: '>=1.0.0-beta.7'
       vite: ^8.0.0
@@ -3280,6 +3283,8 @@ snapshots:
 
   es-module-lexer@1.7.0: {}
 
+  es-module-lexer@2.1.0: {}
+
   esbuild@0.18.20:
     optionalDependencies:
       '@esbuild/android-arm': 0.18.20
@@ -3850,7 +3855,7 @@ snapshots:
       - vite
       - yaml
 
-  void@0.7.5(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6):
+  void@0.8.11(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6):
     dependencies:
       '@cloudflare/sandbox': 0.10.0
       '@cloudflare/vite-plugin': 1.36.3(@voidzero-dev/vite-plus-core@0.1.23(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(workerd@1.20260507.1)(wrangler@4.90.0(@cloudflare/workers-types@4.20260511.1))
@@ -3865,6 +3870,7 @@ snapshots:
       drizzle-orm: 0.45.2(@cloudflare/workers-types@4.20260511.1)(better-sqlite3@12.9.0)(kysely@0.28.15)(pg@8.20.0)
       drizzle-valibot: 0.4.2(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260511.1)(better-sqlite3@12.9.0)(kysely@0.28.15)(pg@8.20.0))(valibot@1.3.1)
       drizzle-zod: 0.8.3(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260511.1)(better-sqlite3@12.9.0)(kysely@0.28.15)(pg@8.20.0))(zod@4.3.6)
+      es-module-lexer: 2.1.0
       hono: 4.12.18
       ignore: 7.0.5
       jsonc-parser: 3.3.1
