@@ -8,7 +8,7 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.23
   vite-plus: 0.1.23
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.23
-  void: 0.7.5
+  void: 0.8.11
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
