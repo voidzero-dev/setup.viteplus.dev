@@ -8,7 +8,7 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.24
   vite-plus: 0.1.24
   vitest: npm:@voidzero-dev/vite-plus-test@0.1.24
-  void: 0.9.0
+  void: 0.9.3
 minimumReleaseAgeExclude:
   - vite-plus
   - "@voidzero-dev/vite-plus-*"

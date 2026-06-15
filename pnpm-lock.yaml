@@ -13,8 +13,8 @@ catalogs:
       specifier: 0.1.24
       version: 0.1.24
     void:
-      specifier: 0.9.0
-      version: 0.9.0
+      specifier: 0.9.3
+      version: 0.9.3
 
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@0.1.24
@@ -35,7 +35,7 @@ importers:
         version: 0.1.24(@types/node@25.6.0)(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(esbuild@0.27.7)(tsx@4.21.0)
       void:
         specifier: 'catalog:'
-        version: 0.9.0(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6)
+        version: 0.9.3(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6)
 
 packages:
 
@@ -2235,11 +2235,11 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  void@0.9.0:
-    resolution: {integrity: sha512-MpQ5WnAKO93dh1qA4NmRPyfHvyuYUcHPrKXiHHTyyqFo6eCyZBEnRs/lfh0QcQmboiu4vshHluIzFoCjMnD5ug==}
+  void@0.9.3:
+    resolution: {integrity: sha512-qCQrUTAjp2bOSbr9JeIysghEkDcUWG7KszgCpQ9ZzHmbmbPkWlkyRpQ8hhVmvO62h/QXEK6N7CXHTpMfg8iNMA==}
     hasBin: true
     peerDependencies:
-      '@void/md': 0.9.0
+      '@void/md': 0.9.3
       arktype: '>=2.0.0'
       valibot: '>=1.0.0-beta.7'
       vite: ^8.0.0
@@ -3855,7 +3855,7 @@ snapshots:
       - vite
       - yaml
 
-  void@0.9.0(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6):
+  void@0.9.3(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(arktype@2.2.0)(kysely@0.28.15)(valibot@1.3.1)(workerd@1.20260507.1)(zod@4.3.6):
     dependencies:
       '@cloudflare/sandbox': 0.10.0
       '@cloudflare/vite-plugin': 1.36.3(@voidzero-dev/vite-plus-core@0.1.24(@types/node@25.6.0)(esbuild@0.27.7)(tsx@4.21.0))(workerd@1.20260507.1)(wrangler@4.90.0(@cloudflare/workers-types@4.20260511.1))
