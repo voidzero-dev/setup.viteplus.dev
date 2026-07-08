@@ -7,10 +7,11 @@ catalog:
   "@types/node": ^25.6.0
   vite: npm:@voidzero-dev/vite-plus-core@0.2.1
   vite-plus: 0.2.1
-  void: 0.9.3
+  void: 0.10.8
 minimumReleaseAgeExclude:
   - vite-plus
   - "@voidzero-dev/vite-plus-*"
+  - void@0.10.8
 overrides:
   vite: "catalog:"
 peerDependencyRules:

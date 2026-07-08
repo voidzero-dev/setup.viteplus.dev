@@ -1,0 +1,34 @@
+name: Deploy to Void
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Latest push wins: cancel an in-flight deploy for the same repo+branch so a
+# newer commit is never overtaken by an older one.
+concurrency:
+  group: void-deploy-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# id-token: write lets the job mint a GitHub OIDC token. No long-lived
+# VOID_TOKEN secret is stored: `void deploy` mints that OIDC token and
+# exchanges it for a short-lived, project-scoped deploy token at deploy time.
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  # Override with a VOID_API_URL repository variable to target staging.
+  VOID_API_URL: ${{ vars.VOID_API_URL || 'https://api.void.cloud' }}
+  VOID_PROJECT: vp-setup
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: voidzero-dev/setup-vp@2dec1e33f4ab2c6d5bce1b0c4607961bb1a3f7a1 # v1.12.0
+        with:
+          cache: true
+      - name: Deploy
+        run: vpx void deploy --project "$VOID_PROJECT"
