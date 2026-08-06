@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
-    "prepare": "vp config"
+    "prepare": "vp config && void prepare"
   },
   "devDependencies": {
     "@types/node": "catalog:",
