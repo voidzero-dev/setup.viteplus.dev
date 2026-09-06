@@ -7,7 +7,7 @@ catalog:
   "@types/node": ^25.6.0
   vite: npm:@voidzero-dev/vite-plus-core@0.3.0
   vite-plus: 0.3.0
-  void: 0.10.12
+  void: 0.10.13
 minimumReleaseAgeExclude:
   - vite-plus
   - "@voidzero-dev/vite-plus-*"
