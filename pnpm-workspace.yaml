@@ -5,8 +5,8 @@ allowBuilds:
   workerd: true
 catalog:
   "@types/node": ^25.6.0
-  vite: npm:@voidzero-dev/vite-plus-core@0.3.2
-  vite-plus: 0.3.2
+  vite: npm:@voidzero-dev/vite-plus-core@0.3.3
+  vite-plus: 0.3.3
   void: 0.20.0
 minimumReleaseAgeExclude:
   - vite-plus
