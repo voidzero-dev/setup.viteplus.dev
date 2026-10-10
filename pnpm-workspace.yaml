@@ -11,12 +11,8 @@ catalog:
 minimumReleaseAgeExclude:
   - vite-plus
   - "@voidzero-dev/vite-plus-*"
-  - void@0.27.0
-  - "@void/deploy-cloudflare@0.27.0"
-  - "@void/deploy-core@0.27.0"
-  - "@void/edge@0.27.0"
-  - "@void/isr@0.27.0"
-  - "@void/platform@0.27.0"
+  - void
+  - "@void/*"
 overrides:
   vite@*: "catalog:"
 peerDependencyRules:
