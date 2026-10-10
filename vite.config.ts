@@ -12,7 +12,11 @@ export default defineConfig({
   },
   fmt: {},
   lint: { options: { typeAware: true, typeCheck: true } },
-  plugins: [voidPlugin()],
+  test: {
+    include: ["**/*.test.ts"],
+  },
+  // Keep unit tests independent of Void's development server.
+  plugins: process.env.VITEST ? [] : [voidPlugin()],
   define: {
     __DEPLOY_COMMIT__: JSON.stringify(commitHash),
     __DEPLOY_TIME__: JSON.stringify(buildTime),
