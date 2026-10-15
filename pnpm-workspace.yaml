@@ -7,12 +7,20 @@ catalog:
   "@types/node": ^25.6.0
   vite: npm:@voidzero-dev/vite-plus-core@1.2.0
   vite-plus: 1.2.0
-  void: 0.28.0
+  void: 1.1.0
 minimumReleaseAgeExclude:
   - vite-plus
   - "@voidzero-dev/vite-plus-*"
   - void
   - "@void/*"
+  - "@cloudflare/build-output-utils@0.9.2"
+  - "@cloudflare/codemods@0.5.0"
+  - "@cloudflare/config@0.26.0"
+  - "@cloudflare/runtime-types@0.1.11"
+  - "@cloudflare/vite-plugin@1.64.0"
+  - cf@1.0.0-beta.17
+  - miniflare@5.20261012.0-beta
+  - wrangler@4.151.0
 overrides:
   vite@*: "catalog:"
 peerDependencyRules:
